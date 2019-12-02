@@ -2,21 +2,27 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
 import { connect } from 'react-redux';
+import { intlShape } from 'react-intl';
 import { ensureDatasetFullyLoaded } from '../../../actions/dataset';
 import SelectDataset from './SelectDataset';
 import SelectColumn from '../SelectColumn';
 import SelectMenu from '../../common/SelectMenu';
 import { guessMergeColumn, getColumnName, directionLabels } from './utils';
 import './SourceMergeOptions.scss';
+import { columnSelectOptions, columnSelectSelectedOption } from '../../../utilities/column';
 
-function SelectMergeColumn({ onChange, columns, mergeColumn }) {
+function SelectMergeColumn({ onChange, columns, mergeColumn, intl }) {
+//  console.log('columns', columns);
   return (
     <div>
       <h1>Merge column</h1>
       <SelectColumn
         placeholder="Select key column"
+        // options={columnSelectSelectedOption(intl, columns)}
         columns={columns}
         value={mergeColumn}
+       // intl={intl}
+        // value={columnSelectOptions(mergeColumn, columns)}
         onChange={onChange}
       />
     </div>
@@ -27,6 +33,7 @@ SelectMergeColumn.propTypes = {
   onChange: PropTypes.func.isRequired,
   columns: PropTypes.object.isRequired,
   mergeColumn: PropTypes.object,
+  intl: intlShape,
 };
 
 function SelectAggregation({
@@ -35,6 +42,7 @@ function SelectAggregation({
   dataset,
   onChangeColumn,
   onChangeDirection,
+  intl,
 }) {
   const { asc, desc } = directionLabels(aggregationColumn);
   return (
@@ -42,11 +50,12 @@ function SelectAggregation({
       <h1>Aggregation strategy</h1>
       <div className="aggregationContainer">
         <span className="aggregationColumn">
-          <SelectColumn
+          <SelectMenu
             placeholder="Select aggregation column"
             showColumnType
-            columns={dataset.get('columns')}
-            value={aggregationColumn}
+            options={columnSelectOptions(intl, dataset.get('columns'))}
+            value={columnSelectSelectedOption(aggregationColumn, dataset.get('columns'))}
+            intl={intl}
             onChange={onChangeColumn}
           />
         </span>
@@ -73,9 +82,10 @@ SelectAggregation.propTypes = {
   dataset: PropTypes.object.isRequired,
   onChangeColumn: PropTypes.func.isRequired,
   onChangeDirection: PropTypes.func.isRequired,
+  intl: intlShape,
 };
 
-function SelectMergeColumns({ onChange, onChangeAll, columns, selected }) {
+function SelectMergeColumns({ onChange, onChangeAll, columns, selected, intl }) {
   const selectedNames = selected.map(o => o.get('columnName'));
   const allSelected = selected.size === columns.size;
   return (
@@ -120,6 +130,7 @@ SelectMergeColumns.propTypes = {
   onChangeAll: PropTypes.func.isRequired,
   columns: PropTypes.object.isRequired,
   selected: PropTypes.object.isRequired,
+  intl: intlShape,
 };
 
 class SourceMergeOptions extends Component {
@@ -257,7 +268,7 @@ class SourceMergeOptions extends Component {
   }
 
   render() {
-    const { datasets } = this.props;
+    const { datasets, intl } = this.props;
     const {
       dataset,
       loadingDataset,
@@ -280,6 +291,7 @@ class SourceMergeOptions extends Component {
           <SelectMergeColumn
             columns={dataset.get('columns')}
             mergeColumn={mergeColumn}
+            intl={intl}
             onChange={column => this.handleSelectMergeColumn(column)}
           />
         }
@@ -290,11 +302,13 @@ class SourceMergeOptions extends Component {
             aggregationColumn={aggregationColumn}
             aggregationDirection={aggregationDirection}
             dataset={dataset}
+            intl={intl}
           />
         }
         {mergeColumn != null &&
           <SelectMergeColumns
             columns={columns}
+            intl={intl}
             selected={mergeColumns}
             onChange={column => this.handleToggleMergeColumn(column)}
             onChangeAll={() => this.handleToggleAllColumns(columns)}
@@ -309,6 +323,7 @@ SourceMergeOptions.propTypes = {
   dispatch: PropTypes.func.isRequired,
   datasets: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
+  intl: intlShape,
 };
 
 // Inject dispatch only
